@@ -1,0 +1,14 @@
+name: json_java_converter
+description: A library for typed conversion between Java objects, serialized to Json, and native Dart objects.
+version: 0.0.1
+author: Jacob Burroughs <maths22@gmail.com>
+homepage: https://github.com/maths22/dart-json-java-converter
+
+environment:
+  sdk: '>=1.0.0 <2.0.0'
+
+dependencies:
+  code_transformers: '>=0.4.2 <0.5.0'
+
+dev_dependencies:
+  test: '>=0.12.0 <0.13.0'
