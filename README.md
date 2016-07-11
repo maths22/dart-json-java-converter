@@ -30,6 +30,11 @@ season.dart:
 
     }
 
+To initialize the converters, you must call `registerJsonConverters()` in the
+main method of your application (typically in `web/main.dart`).
+
+Add `json_java_converter` to the list of transformers in your `pubspec.yaml`.
+
 Usage of converter:
 
     converter = new RpcConverter();

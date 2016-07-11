@@ -59,5 +59,5 @@ class RpcConverter {
 }
 
 registerJsonConverters() {
-  throw new Exception("Dummy method cannot be called");
+  throw new Exception("The json_java_converter transformer must be listed in your pubspec.yaml");
 }
