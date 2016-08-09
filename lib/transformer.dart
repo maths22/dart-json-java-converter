@@ -19,7 +19,6 @@ class JsonTransformer extends Transformer with ResolverTransformer {
     ClassElement classAnnotation = resolver.getType("rpc_converter.RemoteClass");
     StringBuffer imports = new StringBuffer();
     imports.write('library rpc_json_converters;\n\n');
-    imports.write("import 'package:angular2/core.dart';\n");
     imports.write("import '" + resolver.getImportUri(resolver.getType('rpc_converter.ConverterRegistry').library).toString() + "';\n");
     StringBuffer registrations = new StringBuffer();
 
@@ -28,7 +27,7 @@ class JsonTransformer extends Transformer with ResolverTransformer {
 
     resolver.libraries.where((l) => resolver.getSourceAssetId(l)?.package == transformPackage)
         .expand((l) => l.definingCompilationUnit.types)
-        .where((e) => e.metadata.any((m) => m.element.enclosingElement == classAnnotation))
+        .where((e) => e.metadata.any((m) => m.element?.enclosingElement == classAnnotation))
         .forEach((e) {
           imports.write("import '${resolver.getImportUri(e.library)}';\n");
           output.write(generateParser(resolver, e));
@@ -66,7 +65,7 @@ static void runRegistration() {
     ClassElement classAnnotation = resolver.getType("rpc_converter.RemoteClass");
     ClassElement fieldAnnotation = resolver.getType("rpc_converter.Remote");
     String remoteClass = c.metadata
-        .firstWhere((a) => a.element.enclosingElement == classAnnotation)
+        .firstWhere((m) => m.constantValue.type.isAssignableTo(classAnnotation.type))
         .constantValue.getField("className").toStringValue();
     StringBuffer sb = new StringBuffer();
     sb.write("""
@@ -79,7 +78,7 @@ static const String remoteClass = "${remoteClass}";
     StringBuffer readSb = new StringBuffer();
     readSb.write("${c.name} fromJson(Map<String, dynamic> map) {\n");
     readSb.write("${c.name} obj = new ${c.name}();\n");
-    c.fields.where((e) => e.metadata.any((m) => m.element.enclosingElement == fieldAnnotation))
+    c.fields.where((e) => e.metadata.any((m) => m.constantValue.type.isAssignableTo(fieldAnnotation.type)))
       .forEach((e) {
         writeSb.write("map['${e.name}'] = obj.${e.name};\n");
         readSb.write("obj.${e.name} = map['${e.name}'];\n");

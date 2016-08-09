@@ -10,6 +10,8 @@ class Remote {
   const Remote();
 }
 
+const Remote remote = const Remote();
+
 class ConverterRegistry {
 
 
@@ -47,6 +49,7 @@ class RpcConverter {
     } else if (obj is Map) {
       Map ret = new Map();
       ret.forEach((k, v) => ret[convertToJson(k)] = convertToJson(v));
+      return ret;
     } else if (ConverterRegistry.dartClasses[obj.runtimeType] != null) {
       Map ret = ConverterRegistry.javaClasses[ConverterRegistry.dartClasses[obj.runtimeType]].toJson(obj);
       ret.forEach((k, v) => ret[convertToJson(k)] = convertToJson(v));
