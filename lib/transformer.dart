@@ -52,8 +52,6 @@ static void runRegistration() {
 
     main.entryPoint.computeNode().visitChildren(new RewriteMain(edit));
 
-    resolver.getSourceFile(main);
-
     var print = edit.commit();
     print.build(transform.primaryInput.id.path);
 
@@ -80,8 +78,8 @@ static const String remoteClass = "${remoteClass}";
     readSb.write("${c.name} obj = new ${c.name}();\n");
     c.fields.where((e) => e.metadata.any((m) => m.constantValue.type.isAssignableTo(fieldAnnotation.type)))
       .forEach((e) {
-        writeSb.write("map['${e.name}'] = obj.${e.name};\n");
-        readSb.write("obj.${e.name} = map['${e.name}'];\n");
+        writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
+        readSb.write("if(map.containsKey('${e.name}')) {obj.${e.name} = map['${e.name}'];}\n");
       });
 
     writeSb.write("return map;\n");
