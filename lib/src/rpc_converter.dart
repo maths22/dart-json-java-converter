@@ -51,7 +51,7 @@ class RpcConverter {
       obj.forEach((k, v) => ret[convertToJson(k)] = convertToJson(v));
       return ret;
     } else if (obj is DateTime) {
-      return [obj.millisecondsSinceEpoch];
+      return obj.toIso8601String();
     } else if (ConverterRegistry.dartClasses[obj.runtimeType] != null) {
       Map ret = ConverterRegistry.javaClasses[ConverterRegistry.dartClasses[obj.runtimeType]].toJson(obj);
       ret.forEach((k, v) => ret[convertToJson(k)] = convertToJson(v));
