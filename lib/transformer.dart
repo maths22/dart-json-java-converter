@@ -79,7 +79,7 @@ static const String remoteClass = "${remoteClass}";
     c.fields.where((e) => e.metadata.any((m) => m.constantValue.type.isAssignableTo(fieldAnnotation.type)))
       .forEach((e) {
         writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
-        if(e.type.isAssignableTo(resolver.getType("dart.core.DateTime").type)) {
+        if(e.type.isSubtypeOf(resolver.getType("dart.core.DateTime").type) && !e.type.isDynamic) {
           readSb.write("if(map.containsKey('${e.name}')) {obj.${e.name} = DateTime.parse(map['${e.name}']);}\n");
         } else {
           readSb.write("if(map.containsKey('${e.name}')) {obj.${e.name} = map['${e.name}'];}\n");

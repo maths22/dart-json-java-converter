@@ -1,5 +1,7 @@
 library rpc_converter;
 
+import 'package:logging/logging.dart';
+
 class RemoteClass {
   final String className;
 
@@ -25,6 +27,7 @@ class ConverterRegistry {
 }
 
 class RpcConverter {
+  Logger _log = new Logger("RpcConverter");
 
   //TODO: support sets, queues?
   dynamic convertFromJson(dynamic obj) {
@@ -33,8 +36,14 @@ class RpcConverter {
     } else if (obj is Map) {
       Map ret = new Map();
       obj.forEach((k, v) => ret[convertFromJson(k)] = convertFromJson(v));
-      if (obj['@class'] != null) {
-        return ConverterRegistry.javaClasses[obj['@class']].fromJson(ret);
+      String type = obj['@class'];
+      if (type != null) {
+        var converter = ConverterRegistry.javaClasses[type];
+        if(converter == null) {
+          _log.warning('No registration for type $type');
+          return ret;
+        }
+        return converter.fromJson(ret);
       } else {
         return ret;
       }
