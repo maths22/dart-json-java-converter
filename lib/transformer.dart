@@ -61,6 +61,7 @@ static void runRegistration() {
 
   String generateParser(Resolver resolver, ClassElement c) {
     ClassElement classAnnotation = resolver.getType("rpc_converter.RemoteClass");
+    ClassElement enumAnnotation = resolver.getType("rpc_converter.RemoteEnum");
     ClassElement fieldAnnotation = resolver.getType("rpc_converter.Remote");
     String remoteClass = c.metadata
         .firstWhere((m) => m.constantValue.type.isAssignableTo(classAnnotation.type))
@@ -78,10 +79,14 @@ static const String remoteClass = "${remoteClass}";
     readSb.write("${c.name} obj = new ${c.name}();\n");
     c.fields.where((e) => e.metadata.any((m) => m.constantValue.type.isAssignableTo(fieldAnnotation.type)))
       .forEach((e) {
-        writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
         if(e.type.isSubtypeOf(resolver.getType("dart.core.DateTime").type) && !e.type.isDynamic) {
+          writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
           readSb.write("if(map.containsKey('${e.name}')) {obj.${e.name} = DateTime.parse(map['${e.name}']);}\n");
+        } else if(e.type.element.metadata.any((m) => m.constantValue.type.isAssignableTo(enumAnnotation.type))) {
+          writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = enumToString(obj.${e.name});}\n");
+          readSb.write("if(map.containsKey('${e.name}')) {obj.${e.name} = enumFromString(${e.type.name}.values, map['${e.name}']);}\n");
         } else {
+          writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
           readSb.write("if(map.containsKey('${e.name}')) {obj.${e.name} = map['${e.name}'];}\n");
         }
 

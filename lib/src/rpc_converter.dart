@@ -8,6 +8,12 @@ class RemoteClass {
   const RemoteClass([this.className]);
 }
 
+class RemoteEnum {
+  final String className;
+
+  const RemoteEnum([this.className]);
+}
+
 class Remote {
   const Remote();
 }
@@ -70,6 +76,21 @@ class RpcConverter {
       return obj;
     }
   }
+}
+
+String enumToString(dynamic val) {
+  String rawString = val.toString();
+  int dotPos = rawString.lastIndexOf('.');
+  return rawString.substring(dotPos + 1);
+}
+
+dynamic enumFromString(List types, String val) {
+  for(var t in types) {
+    if(enumToString(t) == val) {
+      return t;
+    }
+  }
+  return null;
 }
 
 registerJsonConverters() {
