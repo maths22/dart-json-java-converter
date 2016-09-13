@@ -4,6 +4,9 @@
 /// Support for doing something awesome.
 ///
 /// More dartdocs go here.
-library JsonJavaConverter;
+library json_java_converter;
 
-export 'src/rpc_converter.dart';
+export 'package:json_java_converter/src/library/rpc_converter.dart';
+export 'package:json_java_converter/src/library/converter_registry.dart';
+export 'package:json_java_converter/src/library/enum_utils.dart';
+export 'package:json_java_converter/src/library/annotations.dart';

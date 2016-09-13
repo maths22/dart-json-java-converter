@@ -1,36 +1,7 @@
-library rpc_converter;
+library json_converter_rpc;
 
+import 'package:json_java_converter/src/library/converter_registry.dart';
 import 'package:logging/logging.dart';
-
-class RemoteClass {
-  final String className;
-
-  const RemoteClass([this.className]);
-}
-
-class RemoteEnum {
-  final String className;
-
-  const RemoteEnum([this.className]);
-}
-
-class Remote {
-  const Remote();
-}
-
-const Remote remote = const Remote();
-
-class ConverterRegistry {
-
-
-  static Map<String, dynamic> javaClasses = new Map();
-  static Map<Type, String> dartClasses = new Map();
-
-  static void register(String s, Type t, cv) {
-    javaClasses[s] = cv;
-    dartClasses[t] = s;
-  }
-}
 
 class RpcConverter {
   Logger _log = new Logger("RpcConverter");
@@ -76,23 +47,4 @@ class RpcConverter {
       return obj;
     }
   }
-}
-
-String enumToString(dynamic val) {
-  String rawString = val.toString();
-  int dotPos = rawString.lastIndexOf('.');
-  return rawString.substring(dotPos + 1);
-}
-
-dynamic enumFromString(List types, String val) {
-  for(var t in types) {
-    if(enumToString(t) == val) {
-      return t;
-    }
-  }
-  return null;
-}
-
-registerJsonConverters() {
-  throw new Exception("The json_java_converter transformer must be listed in your pubspec.yaml");
 }

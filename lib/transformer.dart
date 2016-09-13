@@ -2,9 +2,12 @@ import 'package:barback/barback.dart';
 import 'package:code_transformers/resolver.dart';
 import 'dart:async';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:json_java_converter/src/transformer/converter_generator.dart';
 import 'package:source_maps/refactor.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/analyzer.dart';
+import 'package:dart_style/dart_style.dart';
+
 
 class JsonTransformer extends Transformer with ResolverTransformer {
 
@@ -16,21 +19,22 @@ class JsonTransformer extends Transformer with ResolverTransformer {
   Future applyResolver(Transform transform, Resolver resolver) {
     String transformPackage = transform.primaryInput.id.package;
     LibraryElement main = resolver.getLibrary(transform.primaryInput.id);
-    ClassElement classAnnotation = resolver.getType("rpc_converter.RemoteClass");
+    ClassElement classAnnotation = resolver.getType("json_converter_annotations.RemoteClass");
     StringBuffer imports = new StringBuffer();
     imports.write('library rpc_json_converters;\n\n');
-    imports.write("import '" + resolver.getImportUri(resolver.getType('rpc_converter.ConverterRegistry').library).toString() + "';\n");
+    imports.write("import '" + resolver.getImportUri(resolver.getType('json_converter_registry.ConverterRegistry').library).toString() + "';\n");
     StringBuffer registrations = new StringBuffer();
 
     StringBuffer output = new StringBuffer();
 
+    ConverterGenerator converterGenerator = new ConverterGenerator(resolver);
 
     resolver.libraries.where((l) => resolver.getSourceAssetId(l)?.package == transformPackage)
         .expand((l) => l.definingCompilationUnit.types)
         .where((e) => e.metadata.any((m) => m.element?.enclosingElement == classAnnotation))
         .forEach((e) {
           imports.write("import '${resolver.getImportUri(e.library)}';\n");
-          output.write(generateParser(resolver, e));
+          output.write(converterGenerator.generateParser(e));
           registrations.write("ConverterRegistry.register(${e.name}Converter.remoteClass, new ${e.name}().runtimeType, new ${e.name}Converter());\n");
         });
 
@@ -40,12 +44,12 @@ class JsonTransformer extends Transformer with ResolverTransformer {
     output.write("""
 class RpcJsonConverters {
 
-
 static void runRegistration() {
 """);
     output.write(registrations.toString());
     output.write("}\n}\n");
-    transform.addOutput(new Asset.fromString(new AssetId(transformPackage, "web/rpc_json_converters.dart"), output.toString()));
+    transform.addOutput(new Asset.fromString(new AssetId(transformPackage, "web/rpc_json_converters.dart"),
+        new DartFormatter(pageWidth: 120).format(output.toString())));
 
     var edit = resolver.createTextEditTransaction(main);
     edit.edit(0,0,"import 'rpc_json_converters.dart';\n");
@@ -59,58 +63,6 @@ static void runRegistration() {
     return null;
   }
 
-  String generateParser(Resolver resolver, ClassElement c) {
-    ClassElement classAnnotation = resolver.getType("rpc_converter.RemoteClass");
-    ClassElement enumAnnotation = resolver.getType("rpc_converter.RemoteEnum");
-    ClassElement fieldAnnotation = resolver.getType("rpc_converter.Remote");
-    String remoteClass = c.metadata
-        .firstWhere((m) => m.constantValue.type.isAssignableTo(classAnnotation.type))
-        .constantValue.getField("className").toStringValue();
-    StringBuffer sb = new StringBuffer();
-    sb.write("""
-class ${c.name}Converter {
-static const String remoteClass = "${remoteClass}";
-""");
-    StringBuffer writeSb = new StringBuffer();
-    writeSb.write("Map<String, dynamic> toJson(${c.name} obj) {\n");
-    writeSb.write("Map<String, dynamic> map = new Map();\n");
-    StringBuffer readSb = new StringBuffer();
-    readSb.write("${c.name} fromJson(Map<String, dynamic> map) {\n");
-    readSb.write("${c.name} obj = new ${c.name}();\n");
-    c.fields.where((e) => e.metadata.any((m) => m.constantValue.type.isAssignableTo(fieldAnnotation.type)))
-      .forEach((e) {
-        if(e.type.isSubtypeOf(resolver.getType("dart.core.DateTime").type) && !e.type.isDynamic) {
-          writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
-          readSb.write("if(map.containsKey('${e.name}')) {obj.${e.name} = DateTime.parse(map['${e.name}']);}\n");
-        } else if(e.type.element.metadata.any((m) => m.constantValue.type.isAssignableTo(enumAnnotation.type))) {
-          String remoteName = e.type.element.metadata.firstWhere((m) => m.constantValue.type.isAssignableTo(enumAnnotation.type))
-              .constantValue.getField("className").toStringValue();
-          writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = ['$remoteName', enumToString(obj.${e.name})];}\n");
-          readSb.write("if(map.containsKey('${e.name}')) {\n" +
-              "assert(map['${e.name}'][0] == '$remoteName');\n" +
-              "obj.${e.name} = enumFromString(${e.type.name}.values, map['${e.name}'][1]);\n}\n");
-        } else {
-          writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
-          readSb.write("if(map.containsKey('${e.name}')) {obj.${e.name} = map['${e.name}'];}\n");
-        }
-
-      });
-
-    writeSb.write("return map;\n");
-    writeSb.write("}\n");
-    readSb.write("return obj;\n");
-    readSb.write("}\n");
-    sb.write(writeSb.toString());
-    sb.write(readSb.toString());
-    sb.write("}\n");
-    return sb.toString();
-  }
-
-  Future<bool> shouldApplyResolver(Asset asset) async {
-    return true;
-  }
-
-  String get allowedExtensions => '.dart';
 }
 
 class RewriteMain extends Object with  RecursiveAstVisitor<Object> {
