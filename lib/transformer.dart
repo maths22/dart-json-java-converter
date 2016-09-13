@@ -83,8 +83,12 @@ static const String remoteClass = "${remoteClass}";
           writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
           readSb.write("if(map.containsKey('${e.name}')) {obj.${e.name} = DateTime.parse(map['${e.name}']);}\n");
         } else if(e.type.element.metadata.any((m) => m.constantValue.type.isAssignableTo(enumAnnotation.type))) {
-          writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = enumToString(obj.${e.name});}\n");
-          readSb.write("if(map.containsKey('${e.name}')) {obj.${e.name} = enumFromString(${e.type.name}.values, map['${e.name}']);}\n");
+          String remoteName = e.type.element.metadata.firstWhere((m) => m.constantValue.type.isAssignableTo(enumAnnotation.type))
+              .constantValue.getField("className").toStringValue();
+          writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = ['$remoteName', enumToString(obj.${e.name})];}\n");
+          readSb.write("if(map.containsKey('${e.name}')) {\n" +
+              "assert(map['${e.name}'][0] == '$remoteName');\n" +
+              "obj.${e.name} = enumFromString(${e.type.name}.values, map['${e.name}'][1]);\n}\n");
         } else {
           writeSb.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
           readSb.write("if(map.containsKey('${e.name}')) {obj.${e.name} = map['${e.name}'];}\n");
