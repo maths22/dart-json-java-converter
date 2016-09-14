@@ -24,16 +24,33 @@ class ConverterGenerator {
     StringBuffer toJson = _toJsonInit(classElement);
     StringBuffer fromJson = _fromJsonInit(classElement);
 
-    classElement.fields.where((e) => _hasAnnotation(e, _fieldAnnotation)).forEach((e) {
-      if(_isDateTimeField(e)) {
-        _writeDateTimeConverter(e, toJson, fromJson);
-      } else if(_isEnumField(e)) {
-        _writeEnumConverter(e, toJson, fromJson);
-      } else {
-        _writeGenericConverter(e, toJson, fromJson);
-      }
+    classElement.fields
+        .where((e) => _hasAnnotation(e, _fieldAnnotation))
+        .forEach((e) {
+          if(_isDateTimeField(e)) {
+            _writeDateTimeConverter(e, toJson, fromJson);
+          } else if(_isEnumField(e)) {
+            _writeEnumConverter(e, toJson, fromJson);
+          } else {
+            _writeGenericConverter(e, toJson, fromJson);
+          }
 
-    });
+        });
+
+    classElement.allSupertypes
+        .expand((t) => t.accessors)
+        .map((t) => t.variable)
+        .where((e) => _hasAnnotation(e, _fieldAnnotation))
+        .forEach((e) {
+          if(_isDateTimeField(e)) {
+            _writeDateTimeConverter(e, toJson, fromJson);
+          } else if(_isEnumField(e)) {
+            _writeEnumConverter(e, toJson, fromJson);
+          } else {
+            _writeGenericConverter(e, toJson, fromJson);
+          }
+
+        });
 
     return _converterFinish(converter, _toJsonFinish(toJson), _fromJsonFinish(fromJson));
   }
