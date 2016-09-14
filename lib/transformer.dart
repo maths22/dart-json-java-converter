@@ -22,7 +22,7 @@ class JsonTransformer extends Transformer with ResolverTransformer {
     ClassElement classAnnotation = resolver.getType("json_converter_annotations.RemoteClass");
     StringBuffer imports = new StringBuffer();
     imports.write('library rpc_json_converters;\n\n');
-    imports.write("import '" + resolver.getImportUri(resolver.getType('json_converter_registry.ConverterRegistry').library).toString() + "';\n");
+    imports.write("import '" + resolver.getImportUri(resolver.getLibraryByName('json_java_converter')).toString() + "';\n");
     StringBuffer registrations = new StringBuffer();
 
     StringBuffer output = new StringBuffer();
