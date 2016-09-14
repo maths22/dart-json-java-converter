@@ -38,8 +38,7 @@ class ConverterGenerator {
         });
 
     classElement.allSupertypes
-        .expand((t) => t.accessors)
-        .map((t) => t.variable)
+        .expand((t) => t.element.fields)
         .where((e) => _hasAnnotation(e, _fieldAnnotation))
         .forEach((e) {
           if(_isDateTimeField(e)) {
@@ -106,20 +105,29 @@ class ConverterGenerator {
   }
 
   void _writeDateTimeConverter(FieldElement e, StringBuffer toJson, StringBuffer fromJson) {
-    toJson.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
+    bool isReadOnly = _getConstantValue(e, _fieldAnnotation).getField("readOnly").toBoolValue();
+    if(!isReadOnly) {
+      toJson.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
+    }
     fromJson.write("if(map.containsKey('${e.name}')) {obj.${e.name} = DateTime.parse(map['${e.name}']);}\n");
   }
 
   void _writeEnumConverter(FieldElement e, StringBuffer toJson, StringBuffer fromJson) {
     String remoteName = _getConstantValue(e.type.element, _enumAnnotation).getField("className").toStringValue();
-    toJson.write("if(obj.${e.name} != null) {map['${e.name}'] = ['$remoteName', enumToString(obj.${e.name})];}\n");
+    bool isReadOnly = _getConstantValue(e, _fieldAnnotation).getField("readOnly").toBoolValue();
+    if(!isReadOnly) {
+      toJson.write("if(obj.${e.name} != null) {map['${e.name}'] = ['$remoteName', enumToString(obj.${e.name})];}\n");
+    }
     fromJson.write("if(map.containsKey('${e.name}')) {\n" +
         "assert(map['${e.name}'][0] == '$remoteName');\n" +
         "obj.${e.name} = enumFromString(${e.type.name}.values, map['${e.name}'][1]);\n}\n");
   }
 
   void _writeGenericConverter(FieldElement e, StringBuffer toJson, StringBuffer fromJson) {
-    toJson.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
+    bool isReadOnly = _getConstantValue(e, _fieldAnnotation).getField("readOnly").toBoolValue();
+    if(!isReadOnly) {
+      toJson.write("if(obj.${e.name} != null) {map['${e.name}'] = obj.${e.name};}\n");
+    }
     fromJson.write("if(map.containsKey('${e.name}')) {obj.${e.name} = map['${e.name}'];}\n");
   }
 

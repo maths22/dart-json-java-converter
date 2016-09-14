@@ -13,7 +13,9 @@ class RemoteEnum {
 }
 
 class Remote {
-  const Remote();
+  final bool readOnly;
+
+  const Remote({this.readOnly : false});
 }
 
 const Remote remote = const Remote();
